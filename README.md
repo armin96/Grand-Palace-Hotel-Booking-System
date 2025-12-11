@@ -32,4 +32,34 @@ Run the following commands to start the project locally:
 ### 1. Prerequisites
 make sure you have installed:
 * [Node.js](https://nodejs.org/) (v14 or later)
-* MongoDB (Atlas URI is preconfigured in `server.js` for testing purposes) 
+* MongoDB (Atlas URI is preconfigured in `server.js` for testing purposes)
+3. Install Dependencies
+Create a new project and install the following packages:
+Bash
+npm init -y
+npm install express mongoose bcryptjs jsonwebtoken cors multer
+4. Run the Server
+Launch the server side application:
+Bash
+node server.js
+Note: The app connects to a cloud MongoDB Atlas cluster. For demonstration purposes the connection string is hard coded in server.js.
+5. Access the Application
+In a web browser, go to:
+Home Page: http://localhost:3000/index.html
+Admin Panel: http://localhost:3000/admin.html
+Default Credentials (Seed Data)<br>
+During the first run the app seeds the database with the following accounts if they are not already present:<br>
+ Admin Account<br>
+<br>Username: rezamar2002
+Password: admin123<br>
+Test User Account<br>
+Email: ali@test.com<br>
+Password 123456<br>
+Details about API Integration<br>
+Leaflet.js & OpenStreetMap1.<br>
+Objective: To show the location of the hotel on the landing page without holding a credit card (unlike Google Maps).<br>
+Implementation: is in index.html It displays an Interactive map with centered on Berlin coordinates with OSM tiles.<br>
+2. Chart.js<br>
+Objective: For business intelligence in the Admin Panel.<br>
+Implementation: It is in admin.html. It retrieves booking information from the API, summarises total price by month, and draws a revenue bar chart. 
+  
