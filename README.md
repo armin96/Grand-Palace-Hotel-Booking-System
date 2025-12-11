@@ -34,19 +34,19 @@ make sure you have installed:
 * [Node.js](https://nodejs.org/) (v14 or later)
 * MongoDB (Atlas URI is preconfigured in `server.js` for testing purposes)
 3. Install Dependencies
-Create a new project and install the following packages:
-Bash
-npm init -y
-npm install express mongoose bcryptjs jsonwebtoken cors multer
-4. Run the Server
-Launch the server side application:
-Bash
-node server.js
-Note: The app connects to a cloud MongoDB Atlas cluster. For demonstration purposes the connection string is hard coded in server.js.
-5. Access the Application
-In a web browser, go to:
-Home Page: http://localhost:3000/index.html
-Admin Panel: http://localhost:3000/admin.html
+Create a new project and install the following packages:<br>
+Bash<br>
+npm init -y<br>
+npm install express mongoose bcryptjs jsonwebtoken cors multer<br>
+4. Run the Server<br>
+Launch the server side application:<br>
+Bash<br>
+node server.js<br>
+Note: The app connects to a cloud MongoDB Atlas cluster. For demonstration purposes the connection string is hard coded in server.js.<br>
+5. Access the Application<br>
+In a web browser, go to:<br>
+Home Page: http://localhost:3000/index.html<br>
+Admin Panel: http://localhost:3000/admin.html<br>
 Default Credentials (Seed Data)<br>
 During the first run the app seeds the database with the following accounts if they are not already present:<br>
  Admin Account<br>
