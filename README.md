@@ -1,5 +1,10 @@
 
 # Grand Palace Hotel - Booking System
+
+Name : Seyedarmin Hosseinilargani
+Student ID: GH1042143
+
+
 Full-stack web application of a luxury hotel with room booking, user authentication, admin dashboard with analytics and map integration.
 ##  Features
 ### General Features
