@@ -7,7 +7,7 @@
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -16,37 +16,34 @@
   <style>
     :root { --primary-gold: #c19b76; --primary-dark: #212529; }
     body { font-family: 'Lato', sans-serif; background-color: #f9f9f9; color: #555; }
-    h1, h2, h3, h4, h5, .navbar-brand { font-family: 'Playfair Display', serif; color: var(--primary-dark); }
+    h1, h2, h3, h4, h5, .navbar-brand { font-family: 'Playfair Display', serif; color: var(--primary-dark); letter-spacing: 0.5px; }
     
-    .btn-gold { background-color: var(--primary-gold); color: white; border: none; padding: 10px 25px; transition: 0.3s; }
+    .btn-gold { background-color: var(--primary-gold); color: white; border: none; padding: 10px 25px; border-radius: 0; text-transform: uppercase; letter-spacing: 1px; transition: 0.3s; }
     .btn-gold:hover { background-color: #a08060; color: white; }
-    .btn-outline-gold { border: 1px solid var(--primary-gold); color: var(--primary-gold); transition: 0.3s; }
+    .btn-outline-gold { border: 1px solid var(--primary-gold); color: var(--primary-gold); border-radius: 0; transition: 0.3s; }
     .btn-outline-gold:hover { background-color: var(--primary-gold); color: white; }
 
     .hero {
       height: 75vh;
-      background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1920') center/cover;
+      background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1920') center/cover;
       display: flex; align-items: center; justify-content: center; text-align: center; color: white; margin-bottom: 50px;
     }
     .hero h1 { color: white !important; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+    .hero-subtitle { color: white; letter-spacing: 3px; }
 
     .room-card { border: none; border-radius: 8px; overflow: hidden; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: 0.3s; height: 100%; }
     .room-card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
     
     .summary-box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); position: sticky; top: 100px; }
-    
-    /* Map Container */
     #map { height: 400px; width: 100%; border-radius: 12px; z-index: 1; }
   </style>
 </head>
 <body>
 
 <div id="app">
-  
   <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top py-3">
     <div class="container">
       <a class="navbar-brand fs-3 fw-bold" href="#" @click="step=0">Grand Palace</a>
-      
       <div class="d-flex gap-2">
         <button v-if="!user" class="btn btn-outline-dark btn-sm" @click="showAuthModal = true">Login / Sign Up</button>
         <div v-else class="dropdown">
@@ -64,6 +61,7 @@
     </div>
   </nav>
 
+  <!-- Auth Modal -->
   <div v-if="showAuthModal" class="modal d-block" style="background: rgba(0,0,0,0.5)">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content p-4">
@@ -71,82 +69,76 @@
           <h4>{{ authMode === 'login' ? 'Login' : 'Sign Up' }}</h4>
           <button class="btn-close" @click="showAuthModal = false"></button>
         </div>
-        
         <input v-if="authMode === 'register'" v-model="authForm.username" class="form-control mb-3" placeholder="Username">
         <input v-model="authForm.email" class="form-control mb-3" placeholder="Email">
         <input v-model="authForm.password" type="password" class="form-control mb-3" placeholder="Password">
-        
-        <button class="btn btn-gold w-100 mb-3" @click="authenticate">
-          {{ authMode === 'login' ? 'Login' : 'Create Account' }}
-        </button>
-        
+        <button class="btn btn-gold w-100 mb-3" @click="authenticate">{{ authMode === 'login' ? 'Login' : 'Create Account' }}</button>
         <p class="text-center small">
-          {{ authMode === 'login' ? "Don't have an account?" : "Already have an account?" }}
-          <a href="#" @click="authMode = authMode === 'login' ? 'register' : 'login'">
-            {{ authMode === 'login' ? 'Sign Up' : 'Login' }}
-          </a>
+          {{ authMode === 'login' ? "New here?" : "Already have an account?" }}
+          <a href="#" @click="authMode = authMode === 'login' ? 'register' : 'login'">{{ authMode === 'login' ? 'Sign Up' : 'Login' }}</a>
         </p>
       </div>
     </div>
   </div>
 
+  <!-- Step 0: Landing -->
   <div v-if="step === 0">
     <div class="hero">
       <div>
-        <h6 class="text-uppercase letter-spacing-2 mb-3 text-white">Welcome to Paradise</h6>
+        <h6 class="hero-subtitle text-uppercase mb-3">Welcome to Paradise</h6>
         <h1 class="display-3 mb-5">Experience True Luxury</h1>
-        <button class="btn btn-gold btn-lg" @click="step = 1">Book Your Stay</button>
+        <button class="btn btn-gold btn-lg px-5" @click="step = 1">Book Your Stay</button>
       </div>
     </div>
     
-    <div class="container mb-5">
-      <div class="text-center mb-4">
-        <h2>Our Location</h2>
-        <p class="text-muted">Located in the heart of the city (Berlin Example)</p>
+    <div class="container mb-5 text-center">
+      <div class="row g-4">
+        <div class="col-md-3"><i class="bi bi-wifi fs-2 text-warning"></i><h5 class="mt-3">Fast WiFi</h5></div>
+        <div class="col-md-3"><i class="bi bi-cup-hot fs-2 text-warning"></i><h5 class="mt-3">Fine Dining</h5></div>
+        <div class="col-md-3"><i class="bi bi-water fs-2 text-warning"></i><h5 class="mt-3">Infinity Pool</h5></div>
+        <div class="col-md-3"><i class="bi bi-car-front fs-2 text-warning"></i><h5 class="mt-3">Valet Parking</h5></div>
       </div>
+    </div>
+
+    <!-- Map Integration -->
+    <div class="container mb-5">
+      <div class="text-center mb-4"><h2>Our Location</h2><p class="text-muted">Heart of the City</p></div>
       <div id="map"></div>
     </div>
   </div>
 
   <div class="container my-5">
     
+    <!-- Dashboard -->
     <div v-if="step === 'dashboard'">
        <h2 class="mb-4">My Bookings</h2>
        <button class="btn btn-outline-secondary mb-4" @click="step=0">&larr; Back Home</button>
-       
        <div v-if="myBookings.length === 0" class="alert alert-info">No bookings found.</div>
-       
        <div class="card mb-3 p-3 shadow-sm border-0" v-for="b in myBookings" :key="b._id">
           <div class="d-flex justify-content-between align-items-center">
              <div>
                <h5 class="mb-1 text-primary">{{ b.roomId?.type || 'Room' }}</h5>
-               <small class="text-muted">
-                 {{ new Date(b.checkIn).toLocaleDateString() }} - {{ new Date(b.checkOut).toLocaleDateString() }}
-               </small>
-               <div class="mt-2"><span class="badge bg-success">{{ b.status }}</span></div>
+               <small class="text-muted">{{ new Date(b.checkIn).toLocaleDateString() }} - {{ new Date(b.checkOut).toLocaleDateString() }}</small>
+               <div class="mt-1"><span class="badge bg-success">{{ b.status }}</span></div>
              </div>
-             <div class="text-end">
-               <div class="fs-4 fw-bold">${{ b.totalPrice }}</div>
-               <small>{{ b.guests }} Guests</small>
-             </div>
+             <div class="text-end"><div class="fs-4 fw-bold">${{ b.totalPrice }}</div><small>{{ b.guests }} Guests</small></div>
           </div>
        </div>
     </div>
 
+    <!-- Step 1: Rooms -->
     <div v-if="step === 1">
       <div class="text-center mb-5">
         <h2>Accommodations</h2>
         <div style="width: 50px; height: 3px; background: var(--primary-gold); margin: 0 auto;"></div>
       </div>
 
+      <!-- Search -->
       <div class="row g-3 mb-5 justify-content-center">
-         <div class="col-md-4">
-           <input v-model="filters.search" class="form-control" placeholder="Search rooms...">
-         </div>
+         <div class="col-md-4"><input v-model="filters.search" class="form-control" placeholder="Search rooms..."></div>
          <div class="col-md-3">
            <select v-model="filters.sort" class="form-select">
-             <option value="asc">Price: Low to High</option>
-             <option value="desc">Price: High to Low</option>
+             <option value="asc">Price: Low to High</option><option value="desc">Price: High to Low</option>
            </select>
          </div>
       </div>
@@ -160,7 +152,7 @@
             </div>
             <div class="p-4 d-flex flex-column flex-grow-1">
               <h4 class="mb-2">{{ room.type }}</h4>
-              <p class="text-muted mb-4 flex-grow-1">Luxury and comfort combined.</p>
+              <p class="text-muted mb-4 flex-grow-1">Experience luxury and comfort.</p>
               <div class="mt-auto d-flex justify-content-between align-items-center pt-3 border-top">
                 <span class="fs-4 fw-bold text-dark">${{ room.fullPrice }}</span>
                 <button class="btn btn-outline-gold px-4" @click="selectRoom(room)">SELECT</button>
@@ -171,6 +163,7 @@
       </div>
     </div>
 
+    <!-- Step 2: Form -->
     <div v-if="step === 2">
       <button class="btn btn-link text-muted mb-4 ps-0" @click="step = 1">&larr; Back</button>
       <div class="row g-5">
@@ -179,22 +172,22 @@
           <div class="row g-3">
              <div class="col-md-6"><label>Full Name</label><input v-model="form.name" class="form-control"></div>
              <div class="col-md-6"><label>Email</label><input v-model="form.email" class="form-control"></div>
-             <div class="col-md-4"><label>Check-In</label><input v-model="form.checkIn" type="date" class="form-control" :min="minDate"></div>
+             <div class="col-md-4"><label>Check-In</label><input v-model="form.checkIn" type="date" class="form-control" :min="minDate" @change="updateCheckOutMin"></div>
              <div class="col-md-4"><label>Check-Out</label><input v-model="form.checkOut" type="date" class="form-control" :min="form.checkIn"></div>
-             <div class="col-md-4"><label>Guests</label>
-                <select v-model="form.guests" class="form-select"><option>1</option><option>2</option><option>3</option></select>
-             </div>
+             <div class="col-md-4"><label>Guests</label><select v-model="form.guests" class="form-select"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
           </div>
           <h3 class="mt-5 mb-3">Extras</h3>
-          <div v-for="s in services" :key="s._id" class="p-3 border rounded mb-2 d-flex justify-content-between cursor-pointer" 
-               :class="{'bg-light border-warning': selectedServices.includes(s)}" @click="toggleService(s)">
+          <div v-for="s in services" :key="s._id" class="p-3 border rounded mb-2 d-flex justify-content-between cursor-pointer" :class="{'bg-light border-warning': selectedServices.includes(s)}" @click="toggleService(s)">
             <span>{{ s.name }}</span><span>+${{ s.price }}</span>
           </div>
         </div>
         <div class="col-lg-5">
           <div class="summary-box">
              <h4>Summary</h4>
-             <p><strong>{{ selectedRoom.type }}</strong></p>
+             <div class="d-flex mb-3 mt-4">
+                <img :src="selectedRoom.image" style="width:70px; height:70px; object-fit:cover; border-radius:4px;" @error="$event.target.src='https://via.placeholder.com/100'">
+                <div class="ms-3"><h6>{{ selectedRoom.type }}</h6><small>{{ nights }} Nights • {{ form.guests }} Guests</small></div>
+             </div>
              <div class="d-flex justify-content-between"><span>Room</span><span>${{ selectedRoom.fullPrice * nights }}</span></div>
              <div v-for="s in selectedServices" class="d-flex justify-content-between text-muted"><span>{{ s.name }}</span><span>+${{ s.price }}</span></div>
              <hr>
@@ -205,21 +198,21 @@
       </div>
     </div>
 
+    <!-- Step 3: Success -->
     <div v-if="step === 3" class="text-center py-5">
        <h1 class="text-success display-1"><i class="bi bi-check-circle"></i></h1>
        <h2>Confirmed!</h2>
        <p>Thank you {{ form.name }}.</p>
        <button class="btn btn-outline-dark mt-4" @click="step=0">Back Home</button>
     </div>
-
   </div>
   
   <footer class="bg-dark text-white py-5 mt-5 text-center">
      <h3>GRAND PALACE</h3>
      <p class="text-white-50">&copy; 2024 Grand Palace Hotel.</p>
   </footer>
-
 </div>
+
 <script>
   const { createApp } = Vue;
   createApp({
@@ -233,7 +226,7 @@
         form: { name: '', email: '', checkIn: '', checkOut: '', guests: 1 },
         user: null, showAuthModal: false, authMode: 'login',
         authForm: { username: '', email: '', password: '' },
-        mapInstance: null // ذخیره اینستنس نقشه
+        mapInstance: null
       };
     },
     computed: {
@@ -253,70 +246,38 @@
         return r;
       }
     },
-    // تماشای تغییرات step برای لود مجدد نقشه
     watch: {
-      step(newVal) {
-        if (newVal === 0) {
-          this.initMap();
-        }
-      }
+      step(newVal) { if (newVal === 0) this.initMap(); }
     },
     async mounted() {
-      // 1. ابتدا نقشه را لود کن (مستقل از سرور)
       this.initMap();
-
-      // 2. لود اطلاعات کاربر از حافظه
       const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
       if(token && savedUser) this.user = JSON.parse(savedUser);
 
-      // 3. درخواست به سرور (با مدیریت خطا)
       try {
         const [r, s] = await Promise.all([fetch('/api/rooms'), fetch('/api/services')]);
         if(r.ok) this.rooms = await r.json();
         if(s.ok) this.services = await s.json();
-      } catch(e) { 
-        console.log('Server connection failed, but map should still work.'); 
-      }
+      } catch(e) {}
     },
     methods: {
       initMap() {
-        // استفاده از nextTick تا مطمئن شویم HTML رندر شده است
         this.$nextTick(() => {
            const mapContainer = document.getElementById('map');
-           
-           // اگر کانتینر نقشه وجود داشت
            if(mapContainer) {
-             // اگر نقشه قبلی وجود دارد، آن را پاک کن تا ارور ندهد
-             if (this.mapInstance) {
-               this.mapInstance.remove();
-               this.mapInstance = null;
-             }
-
-             // ساخت نقشه جدید
+             if (this.mapInstance) { this.mapInstance.remove(); this.mapInstance = null; }
              this.mapInstance = L.map('map').setView([52.5200, 13.4050], 13);
-             
-             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                 attribution: '&copy; OpenStreetMap contributors'
-             }).addTo(this.mapInstance);
-             
-             L.marker([52.5200, 13.4050]).addTo(this.mapInstance)
-               .bindPopup('<b>Grand Palace Hotel</b><br>Berlin, Germany').openPopup();
-               
-             // ترفند برای رندر صحیح تایل‌ها در برخی مرورگرها
+             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }).addTo(this.mapInstance);
+             L.marker([52.5200, 13.4050]).addTo(this.mapInstance).bindPopup('<b>Grand Palace</b><br>Luxury Hotel').openPopup();
              setTimeout(() => { this.mapInstance.invalidateSize(); }, 200);
            }
         });
       },
-      
-      // --- Auth Methods ---
       async authenticate() {
         try {
           const url = this.authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
-          const res = await fetch(url, {
-             method: 'POST', headers: {'Content-Type': 'application/json'},
-             body: JSON.stringify(this.authForm)
-          });
+          const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(this.authForm) });
           const data = await res.json();
           if(res.ok && data.token) {
              this.user = data.user;
@@ -325,60 +286,33 @@
              this.showAuthModal = false;
              this.form.name = this.user.username;
              this.form.email = this.user.email;
-          } else {
-             alert(data.msg || 'Authentication failed');
-          }
+          } else { alert(data.msg || 'Authentication failed'); }
         } catch(e) { alert('Server error'); }
       },
-      logout() {
-        this.user = null;
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        this.step = 0;
-      },
+      logout() { this.user = null; localStorage.removeItem('token'); localStorage.removeItem('user'); this.step = 0; },
       async fetchMyBookings() {
         const token = localStorage.getItem('token');
         if(!token) return;
         const res = await fetch('/api/my-bookings', { headers: { 'Authorization': 'Bearer ' + token } });
-        if(res.ok) {
-           this.myBookings = await res.json();
-           this.step = 'dashboard';
-        }
+        if(res.ok) { this.myBookings = await res.json(); this.step = 'dashboard'; }
       },
-
-      // --- Booking Methods ---
-      selectRoom(r) { 
-        this.selectedRoom = r; this.step = 2; 
-        this.form.checkIn = this.minDate; 
-        const t = new Date(); t.setDate(t.getDate()+1);
-        this.form.checkOut = t.toISOString().split('T')[0];
-        window.scrollTo(0,0);
-      },
-      toggleService(s) {
-        if(this.selectedServices.includes(s)) this.selectedServices = this.selectedServices.filter(x=>x._id!==s._id);
-        else this.selectedServices.push(s);
-      },
+      selectRoom(r) { this.selectedRoom = r; this.step = 2; this.form.checkIn = this.minDate; const t = new Date(); t.setDate(t.getDate()+1); this.form.checkOut = t.toISOString().split('T')[0]; window.scrollTo(0,0); },
+      updateCheckOutMin() { if (this.form.checkOut < this.form.checkIn) this.form.checkOut = this.form.checkIn; },
+      toggleService(s) { if(this.selectedServices.includes(s)) this.selectedServices = this.selectedServices.filter(x=>x._id!==s._id); else this.selectedServices.push(s); },
       async submitBooking() {
         if(!this.form.name || !this.form.email) return alert('Details required');
         const token = localStorage.getItem('token');
-        
         try {
           const res = await fetch('/api/bookings', {
             method:'POST', headers:{'Content-Type':'application/json'},
             body: JSON.stringify({
-              token: token,
-              guestName: this.form.name, guestEmail: this.form.email,
+              token: token, guestName: this.form.name, guestEmail: this.form.email,
               roomId: this.selectedRoom._id, checkIn: this.form.checkIn, checkOut: this.form.checkOut,
-              nights: this.nights, guests: this.form.guests,
-              totalPrice: this.totalPrice, services: this.selectedServices.map(s=>s.name)
+              nights: this.nights, guests: this.form.guests, totalPrice: this.totalPrice, services: this.selectedServices.map(s=>s.name)
             })
           });
-          if(res.ok) {
-            this.step = 3; window.scrollTo(0,0);
-          } else {
-            alert('Booking failed');
-          }
-        } catch(e) { alert('Error submitting booking'); }
+          if(res.ok) { this.step = 3; window.scrollTo(0,0); } else alert('Booking failed');
+        } catch(e) { alert('Error'); }
       }
     }
   }).mount('#app');

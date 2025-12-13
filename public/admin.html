@@ -2,239 +2,217 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Grand Palace Hotel - Admin Panel</title>
+  <title>Admin Panel - Grand Palace</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { background: #f1f5f9; min-height: 100vh; font-family: sans-serif; }
-    .sidebar { background: #1e293b; color: white; min-height: 100vh; width: 250px; position: fixed; padding: 20px; }
-    .nav-link { color: #cbd5e1; padding: 10px; border-radius: 8px; margin: 5px 0; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+    body { background: #f1f5f9; font-family: sans-serif; min-height: 100vh; }
+    .sidebar { width: 260px; background: #1e293b; color: #fff; position: fixed; height: 100vh; padding: 20px; }
+    .main { margin-left: 260px; padding: 30px; }
+    .nav-link { color: #cbd5e1; padding: 12px; margin: 5px 0; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
     .nav-link:hover, .nav-link.active { background: #334155; color: #fbbf24; }
-    .main { margin-left: 250px; padding: 30px; }
-    .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
-    .stat-card h3 { font-size: 2.5rem; font-weight: bold; color: #4f46e5; margin: 0; }
-    .role-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; }
-    .role-admin { background: #fee2e2; color: #991b1b; }
-    .role-user { background: #dcfce7; color: #166534; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .stat-card { text-align: center; padding: 20px; }
+    .stat-card h3 { color: #4f46e5; font-weight: bold; margin: 0; font-size: 2.5rem; }
   </style>
 </head>
 <body>
-  <div id="app">
-    <div v-if="!token" class="d-flex justify-content-center align-items-center vh-100 bg-light">
-      <div class="card p-5 shadow" style="width: 400px;">
-        <h3 class="text-center mb-4">Admin Login</h3>
-        <input v-model="username" class="form-control mb-3" placeholder="Username" />
-        <input v-model="password" type="password" class="form-control mb-3" placeholder="Password" />
-        <button @click="login" class="btn btn-primary w-100">Login</button>
-      </div>
-    </div>
-
-    <div v-else class="d-flex">
-      <div class="sidebar">
-        <h3 class="mb-4 text-warning text-center">Grand Palace</h3>
-        <div class="nav flex-column">
-          <a class="nav-link" :class="{active: tab==='dashboard'}" @click="tab='dashboard'"><i class="bi bi-grid"></i> Dashboard</a>
-          <a class="nav-link" :class="{active: tab==='rooms'}" @click="tab='rooms'"><i class="bi bi-door-open"></i> Rooms</a>
-          <a class="nav-link" :class="{active: tab==='services'}" @click="tab='services'"><i class="bi bi-cup-hot"></i> Services</a>
-          <a class="nav-link" :class="{active: tab==='bookings'}" @click="tab='bookings'"><i class="bi bi-calendar-check"></i> Bookings</a>
-          <a class="nav-link" :class="{active: tab==='users'}" @click="tab='users'"><i class="bi bi-people"></i> Users</a>
-          <a class="nav-link text-danger mt-5" @click="logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
-        </div>
-      </div>
-
-      <div class="main w-100">
-        <div v-if="tab === 'dashboard'">
-          <h2 class="mb-4">Dashboard Overview</h2>
-          <div class="row g-4 mb-5">
-            <div class="col-md-3"><div class="stat-card"><h3>{{ rooms.length }}</h3><p>Rooms</p></div></div>
-            <div class="col-md-3"><div class="stat-card"><h3>{{ services.length }}</h3><p>Services</p></div></div>
-            <div class="col-md-3"><div class="stat-card"><h3>{{ bookings.length }}</h3><p>Bookings</p></div></div>
-            <div class="col-md-3"><div class="stat-card"><h3>{{ users.length }}</h3><p>Users</p></div></div>
-          </div>
-          <div class="card p-4">
-            <h4>Monthly Revenue</h4>
-            <canvas id="revenueChart" style="max-height: 400px;"></canvas>
-          </div>
-        </div>
-
-        <div v-if="tab === 'rooms'">
-          <h2 class="mb-4">Rooms</h2>
-          <div class="card p-4 mb-4">
-            <h5>{{ editingRoom ? 'Edit Room' : 'Add Room' }}</h5>
-            <div class="row g-2">
-              <div class="col-md-3"><input v-model="editForm.type" class="form-control" placeholder="Type"></div>
-              <div class="col-md-2"><input v-model="editForm.fullPrice" class="form-control" placeholder="Price"></div>
-              <div class="col-md-4"><input type="file" @change="onFileChange" class="form-control"></div>
-              <div class="col-md-3"><button @click="saveRoom" class="btn btn-success w-100">Save</button></div>
-            </div>
-          </div>
-          <table class="table bg-white rounded shadow-sm">
-            <thead><tr><th>Image</th><th>Type</th><th>Price</th><th>Action</th></tr></thead>
-            <tbody>
-              <tr v-for="r in rooms" :key="r._id">
-                <td><img :src="r.image" width="50" height="30" style="object-fit:cover"></td>
-                <td>{{ r.type }}</td>
-                <td>${{ r.fullPrice }}</td>
-                <td>
-                  <button @click="startEdit(r)" class="btn btn-sm btn-warning me-2">Edit</button>
-                  <button @click="deleteRoom(r._id)" class="btn btn-sm btn-danger">Delete</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="tab === 'services'">
-          <h2 class="mb-4">Services</h2>
-          <div class="card p-4 mb-4">
-            <div class="row g-2">
-              <div class="col-md-6"><input v-model="newService.name" class="form-control" placeholder="Service Name"></div>
-              <div class="col-md-3"><input v-model="newService.price" class="form-control" placeholder="Price"></div>
-              <div class="col-md-3"><button @click="addService" class="btn btn-primary w-100">Add Service</button></div>
-            </div>
-          </div>
-          <table class="table bg-white rounded shadow-sm">
-            <thead><tr><th>Name</th><th>Price</th><th>Action</th></tr></thead>
-            <tbody>
-              <tr v-for="s in services" :key="s._id">
-                <td>{{ s.name }}</td>
-                <td>${{ s.price }}</td>
-                <td><button @click="deleteService(s._id)" class="btn btn-sm btn-danger">Delete</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="tab === 'bookings'">
-          <h2 class="mb-4">Bookings</h2>
-          <table class="table bg-white rounded shadow-sm">
-            <thead><tr><th>Guest</th><th>Services</th><th>Date</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
-            <tbody>
-              <tr v-for="b in bookings" :key="b._id">
-                <td>{{ b.guestName }}</td>
-                <td><span v-for="s in b.services" class="badge bg-secondary me-1">{{ s }}</span></td>
-                <td>{{ new Date(b.checkIn).toLocaleDateString() }}</td>
-                <td>${{ b.totalPrice }}</td>
-                <td>{{ b.status }}</td>
-                <td><button @click="deleteBooking(b._id)" class="btn btn-sm btn-danger">Delete</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-if="tab === 'users'">
-          <h2 class="mb-4">Users</h2>
-          <table class="table bg-white rounded shadow-sm">
-            <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Action</th></tr></thead>
-            <tbody>
-              <tr v-for="u in users" :key="u._id">
-                <td>{{ u.username }}</td>
-                <td>{{ u.email }}</td>
-                <td><span :class="['role-badge', u.role==='admin'?'role-admin':'role-user']">{{ u.role }}</span></td>
-                <td>
-                  <button @click="toggleRole(u)" class="btn btn-sm btn-info me-2">Toggle Role</button>
-                  <button @click="deleteUser(u._id)" class="btn btn-sm btn-danger">Delete</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-      </div>
+<div id="app">
+  <!-- Login -->
+  <div v-if="!token" class="d-flex justify-content-center align-items-center vh-100">
+    <div class="card p-5 shadow" style="width: 400px;">
+      <h3 class="text-center mb-4 text-primary">Admin Login</h3>
+      <input v-model="username" class="form-control mb-3" placeholder="Username">
+      <input v-model="password" type="password" class="form-control mb-3" placeholder="Password">
+      <button @click="login" class="btn btn-primary w-100">Login</button>
     </div>
   </div>
 
-  <script>
-    const { createApp } = Vue;
-    createApp({
-      data() {
-        return {
-          token: localStorage.token || '',
-          username: 'rezamar2002', password: 'admin123',
-          tab: 'dashboard',
-          rooms: [], services: [], bookings: [], users: [],
-          newService: {name:'', price:''},
-          editingRoom: null,
-          editForm: {type:'', fullPrice:0, beds:1, discount:0, image:''},
-          imageFile: null,
-          chart: null
-        }
-      },
-      watch: {
-        token(v) { if(v) this.loadData(); },
-        tab(v) { if(v==='dashboard') setTimeout(this.renderChart, 100); }
-      },
-      mounted() { if(this.token) this.loadData(); },
-      methods: {
-        async login() {
-          const res = await fetch('/api/admin/login', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({username:this.username, password:this.password})
-          });
-          const data = await res.json();
-          if(data.token) { this.token = data.token; localStorage.token = data.token; }
-          else alert('Login Failed');
-        },
-        async loadData() {
-          this.rooms = await (await fetch('/api/rooms')).json();
-          this.services = await (await fetch('/api/services')).json();
-          this.bookings = await (await fetch('/api/bookings')).json();
-          this.users = await (await fetch('/api/users')).json();
-          if(this.tab === 'dashboard') this.renderChart();
-        },
-        // Chart Logic
-        renderChart() {
-          const ctx = document.getElementById('revenueChart');
-          if(!ctx) return;
-          if(this.chart) this.chart.destroy();
-          
-          const monthlyData = new Array(12).fill(0);
-          this.bookings.forEach(b => {
-            if(b.checkIn) {
-              const m = new Date(b.checkIn).getMonth();
-              monthlyData[m] += (b.totalPrice || 0);
-            }
-          });
+  <!-- Dashboard -->
+  <div v-else class="d-flex">
+    <div class="sidebar">
+      <h4 class="text-warning text-center mb-4"><i class="bi bi-buildings"></i> Grand Palace</h4>
+      <div class="nav flex-column">
+        <a class="nav-link" :class="{active: tab==='dashboard'}" @click="tab='dashboard'"><i class="bi bi-grid"></i> Dashboard</a>
+        <a class="nav-link" :class="{active: tab==='rooms'}" @click="tab='rooms'"><i class="bi bi-door-open"></i> Rooms</a>
+        <a class="nav-link" :class="{active: tab==='services'}" @click="tab='services'"><i class="bi bi-cup-hot"></i> Services</a>
+        <a class="nav-link" :class="{active: tab==='bookings'}" @click="tab='bookings'"><i class="bi bi-calendar-check"></i> Bookings</a>
+        <a class="nav-link" :class="{active: tab==='users'}" @click="tab='users'"><i class="bi bi-people"></i> Users</a>
+        <a class="nav-link text-danger mt-5" @click="logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+      </div>
+    </div>
 
-          this.chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-              datasets: [{
-                label: 'Revenue ($)', data: monthlyData,
-                backgroundColor: '#4f46e5'
-              }]
-            }
-          });
-        },
-        // Managers
-        async addService() { await fetch('/api/services', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(this.newService)}); this.loadData(); this.newService={name:'', price:''}; },
-        async deleteService(id) { if(confirm('Del?')) await fetch(`/api/services/${id}`, {method:'DELETE'}); this.loadData(); },
-        async deleteBooking(id) { if(confirm('Del?')) await fetch(`/api/bookings/${id}`, {method:'DELETE'}); this.loadData(); },
-        async deleteUser(id) { if(confirm('Del?')) await fetch(`/api/users/${id}`, {method:'DELETE'}); this.loadData(); },
-        async toggleRole(u) { const r = u.role==='admin'?'user':'admin'; await fetch(`/api/users/${u._id}/role`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({role:r})}); this.loadData(); },
-        // Room Logic
-        async saveRoom() {
-          let url = this.editForm.image;
-          if(this.imageFile) {
-            const fd = new FormData(); fd.append('image', this.imageFile);
-            const res = await (await fetch('/api/upload', {method:'POST', body:fd})).json();
-            url = res.url;
-          }
-          const body = {...this.editForm, image:url};
-          const method = this.editingRoom ? 'PUT' : 'POST';
-          const api = this.editingRoom ? `/api/rooms/${this.editingRoom}` : '/api/rooms';
-          await fetch(api, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
-          this.editingRoom=null; this.editForm={type:'', fullPrice:0, beds:1, discount:0, image:''}; this.loadData();
-        },
-        startEdit(r) { this.editingRoom=r._id; this.editForm={...r}; },
-        deleteRoom(id) { if(confirm('Del?')) fetch(`/api/rooms/${id}`, {method:'DELETE'}).then(this.loadData); },
-        onFileChange(e) { this.imageFile = e.target.files[0]; },
-        logout() { this.token=''; localStorage.removeItem('token'); }
+    <div class="main w-100">
+      <!-- Dashboard Tab -->
+      <div v-if="tab === 'dashboard'">
+        <h2 class="mb-4">Overview</h2>
+        <div class="row g-4 mb-5">
+          <div class="col-md-3"><div class="card stat-card"><h3>{{ rooms.length }}</h3><p>Rooms</p></div></div>
+          <div class="col-md-3"><div class="card stat-card"><h3>{{ bookings.length }}</h3><p>Bookings</p></div></div>
+          <div class="col-md-3"><div class="card stat-card"><h3>{{ users.length }}</h3><p>Users</p></div></div>
+          <div class="col-md-3"><div class="card stat-card"><h3>${{ totalRevenue }}</h3><p>Revenue</p></div></div>
+        </div>
+        <div class="card p-4">
+          <h4>Monthly Revenue</h4>
+          <canvas id="revenueChart" style="max-height: 400px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Rooms Tab -->
+      <div v-if="tab === 'rooms'">
+        <div class="card p-4 mb-4">
+          <h5>{{ editingRoom ? 'Edit' : 'Add' }} Room</h5>
+          <div class="row g-2">
+            <div class="col-md-3"><input v-model="editForm.type" class="form-control" placeholder="Type"></div>
+            <div class="col-md-2"><input v-model="editForm.fullPrice" class="form-control" placeholder="Price"></div>
+            <div class="col-md-2"><input v-model="editForm.beds" class="form-control" placeholder="Beds"></div>
+            <div class="col-md-3"><input type="file" @change="onFileChange" class="form-control"></div>
+            <div class="col-md-2"><button @click="saveRoom" class="btn btn-success w-100">Save</button></div>
+          </div>
+        </div>
+        <table class="table bg-white rounded shadow-sm">
+          <thead><tr><th>Img</th><th>Type</th><th>Price</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr v-for="r in rooms" :key="r._id">
+              <td><img :src="r.image" width="50" style="border-radius:4px"></td>
+              <td>{{ r.type }}</td>
+              <td>${{ r.fullPrice }}</td>
+              <td>
+                <button @click="startEdit(r)" class="btn btn-sm btn-warning me-1">Edit</button>
+                <button @click="deleteRoom(r._id)" class="btn btn-sm btn-danger">Del</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Services Tab -->
+      <div v-if="tab === 'services'">
+        <div class="card p-4 mb-4">
+          <div class="row g-2">
+            <div class="col-6"><input v-model="newService.name" class="form-control" placeholder="Name"></div>
+            <div class="col-3"><input v-model="newService.price" class="form-control" placeholder="Price"></div>
+            <div class="col-3"><button @click="addService" class="btn btn-primary w-100">Add</button></div>
+          </div>
+        </div>
+        <table class="table bg-white rounded shadow-sm">
+          <thead><tr><th>Name</th><th>Price</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr v-for="s in services" :key="s._id">
+              <td>{{ s.name }}</td><td>${{ s.price }}</td>
+              <td><button @click="deleteService(s._id)" class="btn btn-sm btn-danger">Del</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bookings Tab -->
+      <div v-if="tab === 'bookings'">
+        <table class="table bg-white rounded shadow-sm">
+          <thead><tr><th>Guest</th><th>Dates</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr v-for="b in bookings" :key="b._id">
+              <td>{{ b.guestName }}<br><small class="text-muted">{{ b.guestEmail }}</small></td>
+              <td>{{ new Date(b.checkIn).toLocaleDateString() }}</td>
+              <td>${{ b.totalPrice }}</td>
+              <td><span class="badge bg-success">{{ b.status }}</span></td>
+              <td><button @click="deleteBooking(b._id)" class="btn btn-sm btn-danger">Cancel</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Users Tab -->
+      <div v-if="tab === 'users'">
+        <table class="table bg-white rounded shadow-sm">
+          <thead><tr><th>Username</th><th>Role</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr v-for="u in users" :key="u._id">
+              <td>{{ u.username }}</td>
+              <td><span class="badge" :class="u.role==='admin'?'bg-danger':'bg-success'">{{ u.role }}</span></td>
+              <td>
+                <button @click="toggleRole(u)" class="btn btn-sm btn-info me-1">Role</button>
+                <button @click="deleteUser(u._id)" class="btn btn-sm btn-danger">Del</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const { createApp } = Vue;
+  createApp({
+    data() {
+      return {
+        token: localStorage.token || '',
+        username: 'rezamar2002', password: 'admin123',
+        tab: 'dashboard',
+        rooms: [], bookings: [], users: [], services: [],
+        newService: {name:'', price:''},
+        editingRoom: null,
+        editForm: {type:'', fullPrice:0, beds:1, discount:0, image:''},
+        imageFile: null, chart: null
       }
-    }).mount('#app');
-  </script>
+    },
+    computed: { totalRevenue() { return this.bookings.reduce((s,b)=>s+(b.totalPrice||0),0); } },
+    watch: {
+      token(v) { if(v) this.loadData(); },
+      tab(v) { if(v==='dashboard') setTimeout(this.renderChart, 100); }
+    },
+    mounted() { if(this.token) this.loadData(); },
+    methods: {
+      async login() {
+        const res = await fetch('/api/admin/login', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({username:this.username, password:this.password})
+        });
+        const d = await res.json();
+        if(d.token) { this.token=d.token; localStorage.token=d.token; } else alert('Fail');
+      },
+      async loadData() {
+        this.rooms = await (await fetch('/api/rooms')).json();
+        this.services = await (await fetch('/api/services')).json();
+        this.bookings = await (await fetch('/api/bookings')).json();
+        this.users = await (await fetch('/api/users')).json();
+        if(this.tab==='dashboard') this.renderChart();
+      },
+      renderChart() {
+        const ctx = document.getElementById('revenueChart');
+        if(!ctx) return;
+        if(this.chart) this.chart.destroy();
+        const data = new Array(12).fill(0);
+        this.bookings.forEach(b => { if(b.checkIn) data[new Date(b.checkIn).getMonth()] += (b.totalPrice||0); });
+        this.chart = new Chart(ctx, { type:'bar', data:{ labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], datasets:[{label:'Revenue', data:data, backgroundColor:'#4f46e5'}] }});
+      },
+      async saveRoom() {
+        let url = this.editForm.image;
+        if(this.imageFile) {
+          const fd = new FormData(); fd.append('image', this.imageFile);
+          const r = await (await fetch('/api/upload', {method:'POST', body:fd})).json();
+          url = r.url;
+        }
+        const body = {...this.editForm, image:url};
+        const method = this.editingRoom ? 'PUT' : 'POST';
+        const api = this.editingRoom ? `/api/rooms/${this.editingRoom}` : '/api/rooms';
+        await fetch(api, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+        this.editingRoom=null; this.editForm={type:'', fullPrice:0, beds:1, discount:0, image:''}; this.loadData();
+      },
+      startEdit(r) { this.editingRoom=r._id; this.editForm={...r}; },
+      deleteRoom(id) { if(confirm('Del?')) fetch(`/api/rooms/${id}`, {method:'DELETE'}).then(this.loadData); },
+      addService() { fetch('/api/services', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(this.newService)}).then(()=>{this.newService={name:'',price:''}; this.loadData()}); },
+      deleteService(id) { fetch(`/api/services/${id}`, {method:'DELETE'}).then(this.loadData); },
+      deleteBooking(id) { fetch(`/api/bookings/${id}`, {method:'DELETE'}).then(this.loadData); },
+      deleteUser(id) { fetch(`/api/users/${id}`, {method:'DELETE'}).then(this.loadData); },
+      toggleRole(u) { fetch(`/api/users/${u._id}/role`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({role: u.role==='admin'?'user':'admin'})}).then(this.loadData); },
+      onFileChange(e) { this.imageFile = e.target.files[0]; },
+      logout() { this.token=''; localStorage.removeItem('token'); }
+    }
+  }).mount('#app');
+</script>
 </body>
 </html>
