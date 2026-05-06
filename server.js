@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
@@ -16,6 +17,10 @@ if (!fs.existsSync('./uploads')) fs.mkdirSync('./uploads');
 app.use('/uploads', express.static('uploads'));
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 // Multer Config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
@@ -24,9 +29,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // Database Connection
-mongoose.connect('mongodb+srv://rezamar2002_db_user:Reza123%21%40%23@cluster0.g1mxgem.mongodb.net/grandpalace?retryWrites=true&w=majority')
-  .then(() => console.log(' Connected to MongoDB'))
-  .catch(err => console.log(' DB Error:', err));
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/grandpalace')
+  .then(() => console.log('✅ Connected to MongoDB (Local)'))
+  .catch(err => console.log('❌ DB Error:', err));
 
 // --- Schemas ---
 const UserSchema = new mongoose.Schema({
@@ -126,7 +131,7 @@ app.post('/api/auth/register', async (req, res) => {
   if (await User.findOne({ email })) return res.status(400).json({ msg: 'Email exists' });
   const hashed = await bcrypt.hash(password, 10);
   const user = await User.create({ username, email, password: hashed });
-  const token = jwt.sign({ id: user._id, role: user.role }, 'secret-key');
+  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret-key');
   res.json({ token, user: { username, email, role: user.role } });
 });
 
@@ -134,7 +139,7 @@ app.post('/api/auth/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await User.findOne({ $or: [{ email }, { username: email }] });
   if (!user || !await bcrypt.compare(password, user.password)) return res.status(400).json({ msg: 'Invalid credentials' });
-  const token = jwt.sign({ id: user._id, role: user.role }, 'secret-key');
+  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret-key');
   res.json({ token, user: { username: user.username, email: user.email, role: user.role } });
 });
 
@@ -143,7 +148,7 @@ app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username });
     if (!user || user.role !== 'admin' || !await bcrypt.compare(password, user.password)) return res.status(400).json({ msg: 'Invalid' });
-    res.json({ token: jwt.sign({ id: user._id, role: user.role }, 'secret-key') });
+    res.json({ token: jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret-key') });
 });
 
 // --- API Routes ---
@@ -165,7 +170,7 @@ app.post('/api/bookings', async (req, res) => {
   let userId = null;
   
   if (token) {
-    try { userId = jwt.verify(token, 'secret-key').id; } catch(e) {}
+    try { userId = jwt.verify(token, process.env.JWT_SECRET || 'secret-key').id; } catch(e) {}
   }
   
   if (!userId) {
@@ -185,7 +190,7 @@ app.get('/api/my-bookings', async (req, res) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ msg: 'No token' });
   try {
-    const decoded = jwt.verify(token, 'secret-key');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret-key');
     const bookings = await Booking.find({ userId: decoded.id }).populate('roomId');
     res.json(bookings);
   } catch (e) { res.status(401).json({ msg: 'Invalid token' }); }
