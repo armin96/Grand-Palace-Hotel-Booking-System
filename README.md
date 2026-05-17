@@ -1,10 +1,7 @@
 
 # Grand Palace Hotel - Booking System
-<br><br>
-Name : Seyedarmin Hosseinilargani
-<br><br>
 
-<br><br><br>
+<br>
 
 Full-stack web application of a luxury hotel with room booking, user authentication, admin dashboard with analytics and map integration.
 ##  Features
